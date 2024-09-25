@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-Time Trading Platform</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Live Stock Prices for <span id="stockName">XYZ Corp</span></h1>
+    <canvas id="stockChart"></canvas>
+  </div>
+
+  <script>
+    const ctx = document.getElementById('stockChart').getContext('2d');
+    const socket = io();
+
+    let stockPrices = [];
+    let labels = [];
+
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Stock Price',
+          data: stockPrices,
+          borderColor: 'rgba(75, 192, 192, 1)',
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          fill: true,
+        }]
+      },
+      options: {
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Time'
+            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Price'
+            }
+          }
+        }
+      }
+    });
+
+    socket.on('priceUpdate', (data) => {
+      const now = new Date().toLocaleTimeString();
+
+      stockPrices.push(data.stockPrice);
+      labels.push(now);
+
+      // Keep the chart showing only the last 10 data points
+      if (stockPrices.length > 10) {
+        stockPrices.shift();
+        labels.shift();
+      }
+
+      document.getElementById('stockName').textContent = data.stockName;
+      chart.update();
+    });
+  </script>
+</body>
+</html>
